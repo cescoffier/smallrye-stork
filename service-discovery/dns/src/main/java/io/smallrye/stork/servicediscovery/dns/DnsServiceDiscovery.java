@@ -47,7 +47,6 @@ public class DnsServiceDiscovery extends CachingServiceDiscovery {
     private final boolean failOnError;
     private final long dnsTimeoutMs;
     private final boolean recursionDesired;
-
     private final boolean resolveSrv;
 
     // we'll use one resolver to resolve DNS server addresses and create another resolver backed up by them

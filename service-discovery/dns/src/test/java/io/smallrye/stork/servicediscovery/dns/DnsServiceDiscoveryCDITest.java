@@ -145,6 +145,24 @@ public class DnsServiceDiscoveryCDITest {
     }
 
     @Test
+    void shouldGetServiceInstanceIdsFromDnsWithoutResolving() throws InterruptedException {
+        //Given a service `my-service` registered in consul (available via DNS) and a refresh-period of 5 minutes
+        String serviceName = "my-service";
+
+        DnsConfiguration config = new DnsConfiguration().withDnsServers(getDnsIp() + ":" + dnsPort)
+                .withHostname("my-service.service.dc1.consul").withRefreshPeriod("5M")
+                .withPort("8111")
+                .withResolveSrv("false");
+        stork.defineIfAbsent(serviceName, ServiceDefinition.of(config));
+
+        registerService(serviceName, "7f000005.addr.dc1.consul:8406");
+
+        List<ServiceInstance> instances = getServiceInstances(serviceName, 20);
+        assertThat(instances).isNotEmpty();
+        assertThat(instances.get(0).getHost()).isEqualTo("7f000005.addr.dc1.consul");
+    }
+
+    @Test
     void shouldFailWithoutPortForA() throws InterruptedException {
         //Given a service `my-service-2` registered in consul and a refresh-period of 5 minutes
         String serviceName = "my-service-3";
@@ -357,15 +375,15 @@ public class DnsServiceDiscoveryCDITest {
     }
 
     private void registerService(String application,
-            String... addresses) throws InterruptedException {
+                                 String... addresses) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(addresses.length);
         Set<String> consulServiceIds = new HashSet<>();
         for (String addressString : addresses) {
             HostAndPort address = StorkAddressUtils.parseToHostAndPort(addressString, 0, "");
             String consulServiceId = "" + (consulId++);
             client.registerService(
-                    new ServiceOptions().setId(consulServiceId).setName(application)
-                            .setAddress(address.host).setPort(address.port))
+                            new ServiceOptions().setId(consulServiceId).setName(application)
+                                    .setAddress(address.host).setPort(address.port))
                     .onComplete(result -> {
                         if (result.failed()) {
                             fail("Failed to register service in Consul " + address, result.cause());
