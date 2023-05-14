@@ -375,15 +375,15 @@ public class DnsServiceDiscoveryCDITest {
     }
 
     private void registerService(String application,
-                                 String... addresses) throws InterruptedException {
+            String... addresses) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(addresses.length);
         Set<String> consulServiceIds = new HashSet<>();
         for (String addressString : addresses) {
             HostAndPort address = StorkAddressUtils.parseToHostAndPort(addressString, 0, "");
             String consulServiceId = "" + (consulId++);
             client.registerService(
-                            new ServiceOptions().setId(consulServiceId).setName(application)
-                                    .setAddress(address.host).setPort(address.port))
+                    new ServiceOptions().setId(consulServiceId).setName(application)
+                            .setAddress(address.host).setPort(address.port))
                     .onComplete(result -> {
                         if (result.failed()) {
                             fail("Failed to register service in Consul " + address, result.cause());
